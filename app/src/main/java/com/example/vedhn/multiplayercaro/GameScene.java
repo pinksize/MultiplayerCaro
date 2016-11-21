@@ -1,0 +1,196 @@
+package com.example.vedhn.multiplayercaro;
+
+import java.util.ArrayList;
+import java.util.List;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.RectF;
+import android.util.AttributeSet;
+import android.util.DisplayMetrics;
+import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
+import com.example.vedhn.multiplayercaro.models.Move;
+import com.example.vedhn.multiplayercaro.models.PlayerInfo;
+
+public class GameScene extends View implements View.OnTouchListener {
+
+    private int cellSize;
+    private int numberOfColumn;
+    private int numberOfRow;
+    private Paint gridPaint;
+    private String TAG = GameScene.this.getClass().getSimpleName();
+    private Paint rectPaint;
+    private List<Move> xMoves, oMoves;
+    private int playerType;
+    private PlayerInfo player1;
+    private PlayerInfo player2;
+    private final int USER_TOKEN_1 = 1;
+    private final int USER_TOKEN_2 = 2;
+    private Bitmap xSign;
+    private Bitmap oSign;
+    private Matrix bitmapMatrix;
+    private float sx;
+    private float sy;
+    private float delta;
+
+    public GameScene(Context context) {
+        super(context);
+        init(context);
+    }
+
+    public GameScene(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        init(context);
+    }
+
+    public GameScene(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
+
+        init(context);
+    }
+
+    private void init(Context context) {
+        xMoves = new ArrayList<>();
+        oMoves = new ArrayList<>();
+
+        xSign = BitmapFactory.decodeResource(getResources(), R.drawable.x_sign);
+        oSign = BitmapFactory.decodeResource(getResources(), R.drawable.o_sign);
+
+        bitmapMatrix = new Matrix();
+
+        setBackgroundColor(Color.parseColor("#0097A7"));
+        gridPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        gridPaint.setColor(Color.WHITE);
+        gridPaint.setStyle(Paint.Style.STROKE);
+
+        rectPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        rectPaint.setColor(Color.RED);
+        rectPaint.setStyle(Paint.Style.FILL);
+
+        setOnTouchListener(this);
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+
+        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+        int width = displayMetrics.widthPixels;
+        int height = displayMetrics.heightPixels;
+
+        cellSize = width / 10;
+        numberOfColumn = width / cellSize;
+        numberOfRow = height / cellSize;
+
+        sx = cellSize * 0.75f / xSign.getWidth();
+        sy = cellSize * 0.75f / xSign.getHeight();
+
+        delta = cellSize - sx * xSign.getWidth();
+        delta /= 2;
+
+        setMeasuredDimension(numberOfColumn * cellSize, numberOfRow * cellSize);
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+
+        // draw x user steps
+        rectPaint.setColor(Color.RED);
+        for (Move xMove : xMoves) {
+            bitmapMatrix.setScale(sx, sy);
+            bitmapMatrix.postTranslate(xMove.col * cellSize + delta, xMove.row * cellSize + delta);
+            canvas.drawBitmap(xSign, bitmapMatrix, null);
+        }
+
+        // draw o user steps
+        rectPaint.setColor(Color.BLUE);
+        for (Move oMove : oMoves) {
+            bitmapMatrix.setScale(sx, sy);
+            bitmapMatrix.postTranslate(oMove.col * cellSize + delta, oMove.row * cellSize + delta);
+            canvas.drawBitmap(oSign, bitmapMatrix, null);
+        }
+
+        // draw grid
+        for (int i = 0; i < numberOfColumn; i++) {
+            canvas.drawLine(i * cellSize, 0, i * cellSize, numberOfRow * cellSize, gridPaint);
+        }
+        for (int i = 0; i < numberOfRow; i++) {
+            canvas.drawLine(0, i * cellSize, numberOfColumn * cellSize, i * cellSize, gridPaint);
+        }
+    }
+
+    public int setUser1(PlayerInfo player1) {
+        this.player1 = player1;
+        return USER_TOKEN_1;
+    }
+
+    public int setUser2(PlayerInfo player2) {
+        this.player2 = player2;
+        return USER_TOKEN_2;
+    }
+
+    private void setCurrentUser(int userType) {
+        playerType = userType;
+    }
+
+    private boolean clickedCell(float clickedX, float clickedY) {
+        int col = (int) (clickedX / cellSize);
+        int row = (int) (clickedY / cellSize);
+
+        boolean isCellAvailable = true;
+        for (Move xMove : xMoves) {
+            if (xMove.col == col && xMove.row == row) {
+                isCellAvailable = false;
+                break;
+            }
+        }
+        for (Move oMove : oMoves) {
+            if (oMove.col == col && oMove.row == row) {
+                isCellAvailable = false;
+                break;
+            }
+        }
+        if (!isCellAvailable)
+            return false;
+
+        boolean isClicked = false;
+        RectF rect = new RectF(col * cellSize, row * cellSize, col * cellSize + cellSize, row * cellSize + cellSize);
+        if (rect.contains(clickedX, clickedY)) {
+            Log.d(TAG, "clickedCell: " + col + ", " + row);
+            isClicked = true;
+
+            if (playerType == USER_TOKEN_1) {
+                xMoves.add(new Move(player1, "", col, row));
+            } else if (playerType == USER_TOKEN_2) {
+                oMoves.add(new Move(player2, "", col, row));
+            }
+
+            invalidate();
+        } else {
+            isClicked = false;
+        }
+        return isClicked;
+    }
+
+    private boolean isStepDone = false;
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+            boolean isClicked = clickedCell(event.getX(), event.getY());
+            if (isClicked) {
+                isStepDone = !isStepDone;
+                setCurrentUser(isStepDone ? USER_TOKEN_1 : USER_TOKEN_2);
+            }
+        }
+        return false;
+    }
+
+}

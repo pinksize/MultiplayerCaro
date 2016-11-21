@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "1016237336259",
+    "firebase_url": "https://multiplayercaro-b5ec5.firebaseio.com",
+    "project_id": "multiplayercaro-b5ec5",
+    "storage_bucket": "multiplayercaro-b5ec5.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1016237336259:android:b409cdc1d0c45a08",
+        "android_client_info": {
+          "package_name": "com.example.vedhn.multiplayercaro"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1016237336259-oj0c3941hq40j8fprbpcbc46j70eqisi.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.vedhn.multiplayercaro",
+            "certificate_hash": "8D55CEE1B7F8BCD4E6194B395439B30DE9270AF1"
+          }
+        },
+        {
+          "client_id": "1016237336259-th6m8sp4g1couue5v15h2cnsaakss0st.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDrRnImSYdU0URa6DIjzFfVX0ZCthD4pLo"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1016237336259-th6m8sp4g1couue5v15h2cnsaakss0st.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
