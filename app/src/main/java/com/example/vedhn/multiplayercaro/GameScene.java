@@ -193,4 +193,23 @@ public class GameScene extends View implements View.OnTouchListener {
         return false;
     }
 
+    public interface GameSceneListener{
+
+        /** call when a step is completed, should switch to next player
+         * @param playerInfo
+         */
+        void onStepFinished(PlayerInfo playerInfo);
+
+        /** call when game is finished
+         * @param winner
+         */
+        void onGameFinished(PlayerInfo winner);
+
+        /** call when game is starting
+         * @param player1
+         * @param player2
+         */
+        void onGameStarted(PlayerInfo player1, PlayerInfo player2);
+    }
+
 }
