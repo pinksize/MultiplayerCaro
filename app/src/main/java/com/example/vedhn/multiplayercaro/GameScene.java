@@ -27,17 +27,14 @@ public class GameScene extends View implements View.OnTouchListener {
     private String TAG = GameScene.this.getClass().getSimpleName();
     private Paint rectPaint;
     private List<Move> xMoves, oMoves;
-    private int playerType;
-    private PlayerInfo player1;
-    private PlayerInfo player2;
-    private final int USER_TOKEN_1 = 1;
-    private final int USER_TOKEN_2 = 2;
+    private PlayerInfo player1, player2, currentUser;
     private Bitmap xSign;
     private Bitmap oSign;
     private Matrix bitmapMatrix;
     private float sx;
     private float sy;
     private float delta;
+    private GameSceneListener mListener;
 
     public GameScene(Context context) {
         super(context);
@@ -72,8 +69,18 @@ public class GameScene extends View implements View.OnTouchListener {
         rectPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         rectPaint.setColor(Color.RED);
         rectPaint.setStyle(Paint.Style.FILL);
+    }
 
+    public void startGame() {
         setOnTouchListener(this);
+        if (mListener != null)
+            mListener.onGameStarted(player1, player2);
+    }
+
+    public void endGame() {
+        setOnTouchListener(null);
+        if (mListener != null)
+            mListener.onGameFinished(currentUser);
     }
 
     @Override
@@ -126,18 +133,12 @@ public class GameScene extends View implements View.OnTouchListener {
         }
     }
 
-    public int setUser1(PlayerInfo player1) {
+    public void setPlayers(PlayerInfo player1, PlayerInfo player2, GameSceneListener listener) {
         this.player1 = player1;
-        return USER_TOKEN_1;
-    }
-
-    public int setUser2(PlayerInfo player2) {
         this.player2 = player2;
-        return USER_TOKEN_2;
-    }
+        this.mListener = listener;
 
-    private void setCurrentUser(int userType) {
-        playerType = userType;
+        this.currentUser = this.player1;
     }
 
     private boolean clickedCell(float clickedX, float clickedY) {
@@ -166,9 +167,9 @@ public class GameScene extends View implements View.OnTouchListener {
             Log.d(TAG, "clickedCell: " + col + ", " + row);
             isClicked = true;
 
-            if (playerType == USER_TOKEN_1) {
+            if (currentUser == player1) {
                 xMoves.add(new Move(player1, "", col, row));
-            } else if (playerType == USER_TOKEN_2) {
+            } else if (currentUser == player2) {
                 oMoves.add(new Move(player2, "", col, row));
             }
 
@@ -179,33 +180,38 @@ public class GameScene extends View implements View.OnTouchListener {
         return isClicked;
     }
 
-    private boolean isStepDone = false;
-
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
             boolean isClicked = clickedCell(event.getX(), event.getY());
             if (isClicked) {
-                isStepDone = !isStepDone;
-                setCurrentUser(isStepDone ? USER_TOKEN_1 : USER_TOKEN_2);
+                if (mListener != null)
+                    mListener.onStepFinished(currentUser);
+                currentUser = currentUser == player1 ? player2 : player1;
             }
         }
         return false;
     }
 
-    public interface GameSceneListener{
+    public interface GameSceneListener {
 
-        /** call when a step is completed, should switch to next player
+        /**
+         * call when a step is completed, should switch to next player
+         *
          * @param playerInfo
          */
         void onStepFinished(PlayerInfo playerInfo);
 
-        /** call when game is finished
+        /**
+         * call when game is finished
+         *
          * @param winner
          */
         void onGameFinished(PlayerInfo winner);
 
-        /** call when game is starting
+        /**
+         * call when game is starting
+         *
          * @param player1
          * @param player2
          */

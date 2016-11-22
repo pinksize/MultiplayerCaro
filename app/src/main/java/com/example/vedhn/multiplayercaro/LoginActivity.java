@@ -111,57 +111,81 @@ public class LoginActivity extends AppCompatActivity {
             showProgress(true);
 
             // perform login
-            final FirebaseDatabase database = FirebaseDatabase.getInstance();
-            final DatabaseReference users = database.getReference("users");
-            users.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    boolean isValid = false;
-                    if (dataSnapshot != null) {
-                        Iterable<DataSnapshot> children = dataSnapshot.getChildren();
-                        for (DataSnapshot child : children) {
-                            PlayerInfo value = child.getValue(PlayerInfo.class);
-                            String email1 = value.getEmail();
-                            String pwd = value.getPwd();
-                            if (email1.equals(email)) {
-                                isValid = true;
-                                if (pwd.equals(password)) {
-                                    // login success, break
-                                    Toast.makeText(LoginActivity.this, "Login Successful!", Toast.LENGTH_SHORT).show();
-                                    showProgress(false);
-
-                                    // start game
-                                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                                    startActivity(intent);
-
-                                    finish();
-                                    break;
-                                } else {
-                                    mPasswordView.setError(getString(R.string.error_incorrect_password));
-                                    mPasswordView.requestFocus();
-                                    showProgress(false);
-                                }
-                            }
-                        }
-                    }
-
-                    if (!isValid) {
-                        // perform register
-                        String key = users.push().getKey();
-                        PlayerInfo playerInfo = new PlayerInfo(email, password, key);
-                        users.child(key).setValue(playerInfo);
-                        showProgress(false);
-                        Toast.makeText(LoginActivity.this, "create new user success", Toast.LENGTH_SHORT).show();
-                    }
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-
-                }
-            });
+            performLogin(email, password);
         }
 
+    }
+
+    private void performLogin(final String email, final String password) {
+        final FirebaseDatabase database = FirebaseDatabase.getInstance();
+        final DatabaseReference users = database.getReference("users");
+        users.addListenerForSingleValueEvent(new ValueEventListener() {
+                                                 @Override
+                                                 public void onDataChange(DataSnapshot dataSnapshot) {
+                                                     if (dataSnapshot != null) {
+                                                         Iterable<DataSnapshot> children = dataSnapshot.getChildren();
+                                                         boolean isLoginSuccess = false;
+                                                         for (DataSnapshot child : children) {
+                                                             PlayerInfo value = child.getValue(PlayerInfo.class);
+                                                             isLoginSuccess = checkUserLogin(value, email, password);
+                                                             if (isLoginSuccess) {
+                                                                 // login success, break
+                                                                 Toast.makeText(LoginActivity.this, "Login Successful!", Toast.LENGTH_SHORT).show();
+                                                                 showProgress(false);
+
+                                                                 // start game
+                                                                 startGame(value);
+
+                                                                 finish();
+                                                                 break;
+                                                             } else {
+                                                                 mPasswordView.setError(getString(R.string.error_incorrect_password));
+                                                                 mPasswordView.requestFocus();
+                                                                 showProgress(false);
+                                                             }
+                                                         }
+                                                         if (!isLoginSuccess) {
+                                                             // perform register
+                                                             String key = users.push().getKey();
+                                                             PlayerInfo playerInfo = new PlayerInfo(email, password, key);
+                                                             users.child(key).setValue(playerInfo);
+                                                             showProgress(false);
+                                                             Toast.makeText(LoginActivity.this, "create new user success", Toast.LENGTH_SHORT).show();
+
+                                                             startGame(playerInfo);
+                                                         }
+                                                     }
+                                                 }
+
+                                                 @Override
+                                                 public void onCancelled(DatabaseError databaseError) {
+
+                                                 }
+                                             }
+
+        );
+    }
+
+    private void startGame(PlayerInfo value) {
+        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+        intent.putExtra(MainActivity.EXTRA_PLAYER, value);
+        startActivity(intent);
+    }
+
+    private boolean checkUserLogin(PlayerInfo value, String email, String password) {
+        if (value == null)
+            return false;
+
+        String em = value.getEmail();
+        String pwd = value.getPwd();
+        if (em.equals(email)) {
+            if (pwd.equals(password)) {
+                return true;
+            } else {
+                return false;
+            }
+        } else
+            return false;
     }
 
     private boolean isEmailValid(String email) {
