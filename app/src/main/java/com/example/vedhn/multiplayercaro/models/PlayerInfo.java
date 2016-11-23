@@ -8,9 +8,12 @@ import android.os.Parcelable;
  */
 
 public class PlayerInfo implements Parcelable {
+    public static final int PLAYER_STATE_OFF = 0;
+    public static final int PLAYER_STATE_WAITING = 1;
+    public static final int PLAYER_STATE_PLAYING = 2;
     private String email;
     private String pwd;
-    private int status; // on/off
+    private int status;
     private String trophy;
     private String uID;
     private int winNo;

@@ -1,4 +1,4 @@
-package com.example.vedhn.multiplayercaro;
+package com.example.vedhn.multiplayercaro.views;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,32 +9,31 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import com.example.vedhn.multiplayercaro.R;
 import com.example.vedhn.multiplayercaro.models.Move;
 import com.example.vedhn.multiplayercaro.models.PlayerInfo;
 
 public class GameScene extends View implements View.OnTouchListener {
 
+    private String TAG = GameScene.this.getClass().getSimpleName();
     private int cellSize;
     private int numberOfColumn;
     private int numberOfRow;
     private Paint gridPaint;
-    private String TAG = GameScene.this.getClass().getSimpleName();
     private Paint rectPaint;
     private List<Move> xMoves, oMoves;
     private PlayerInfo player1, player2, currentUser;
-    private Bitmap xSign;
-    private Bitmap oSign;
+    private Bitmap xSign, oSign;
     private Matrix bitmapMatrix;
-    private float sx;
-    private float sy;
+    private float sx, sy; // scale
     private float delta;
     private GameSceneListener mListener;
+    private int[][] mark = new int[100][100];
 
     public GameScene(Context context) {
         super(context);
@@ -71,6 +70,119 @@ public class GameScene extends View implements View.OnTouchListener {
         rectPaint.setStyle(Paint.Style.FILL);
     }
 
+    /**
+     * check if game is finished
+     *
+     * @param row last checked row
+     * @param col last check col
+     * @return true if game is finished, false otherwise
+     */
+    public boolean isWon(int row, int col) {
+        int total = 1;
+        int value = mark[row][col];
+        int i = 1, j = 1;
+        // horizontal
+        while (col - i >= 0 && mark[row][col - i] == value) {
+            total++;
+            i++;
+            if (total == 5)
+                break;
+        }
+        if (total == 5)
+            return true;
+        while (col + j < numberOfColumn && mark[row][col + j] == value) {
+            total++;
+            j++;
+            if (total == 5)
+                break;
+        }
+        if (total == 5)
+            return true;
+
+        i = 1;
+        j = 1;
+        total = 1;
+        // vertical
+        while (row - i >= 0 && mark[row - i][col] == value) {
+            total++;
+            i++;
+            if (total == 5)
+                break;
+        }
+        if (total == 5)
+            return true;
+        while (row + j < numberOfRow && mark[row + j][col] == value) {
+            total++;
+            j++;
+            if (total == 5)
+                break;
+        }
+        if (total == 5)
+            return true;
+
+        i = 1;
+        j = 1;
+        total = 1;
+        // diagonal
+        while (row - i >= 0 && (col - i) >= 0 && mark[row - i][col - i] == value) {
+            total++;
+            i++;
+            if (total == 5)
+                break;
+        }
+        if (total == 5)
+            return true;
+        while (row + j < numberOfRow && col + j < numberOfColumn && mark[row + j][col + j] == value) {
+            total++;
+            j++;
+            if (total == 5)
+                break;
+        }
+        if (total == 5)
+            return true;
+
+        i = 1;
+        j = 1;
+        total = 1;
+        while (row + i < numberOfRow && col - i >= 0 && mark[row + i][col - i] == value) {
+            total++;
+            i--;
+            if (total == 5)
+                break;
+        }
+        if (total == 5)
+            return true;
+        while (row - j >= 0 && col + j < numberOfColumn && mark[row - j][col + j] == value) {
+            total++;
+            j++;
+            if (total == 5)
+                break;
+        }
+        return total == 5;
+
+    }
+
+    private boolean isVerticalWon(int row, int col){
+        int value = mark[row][col];
+        int total = 1;
+
+        return total == 5;
+    }
+
+    private boolean isHorizontalWon(int row, int col){
+        int value = mark[row][col];
+        int total = 0;
+
+        return total == 5;
+    }
+
+    private boolean isDiagonalWon(int row, int col){
+        int value = mark[row][col];
+        int total = 0;
+
+        return total == 5;
+    }
+
     public void startGame() {
         setOnTouchListener(this);
         if (mListener != null)
@@ -94,6 +206,11 @@ public class GameScene extends View implements View.OnTouchListener {
         cellSize = width / 10;
         numberOfColumn = width / cellSize;
         numberOfRow = height / cellSize;
+        for (int i = 0; i < numberOfRow; i++) {
+            for (int j = 0; j < numberOfColumn; j++) {
+                mark[i][j] = 0;
+            }
+        }
 
         sx = cellSize * 0.75f / xSign.getWidth();
         sy = cellSize * 0.75f / xSign.getHeight();
@@ -141,52 +258,35 @@ public class GameScene extends View implements View.OnTouchListener {
         this.currentUser = this.player1;
     }
 
-    private boolean clickedCell(float clickedX, float clickedY) {
-        int col = (int) (clickedX / cellSize);
-        int row = (int) (clickedY / cellSize);
-
-        boolean isCellAvailable = true;
-        for (Move xMove : xMoves) {
-            if (xMove.col == col && xMove.row == row) {
-                isCellAvailable = false;
-                break;
-            }
-        }
-        for (Move oMove : oMoves) {
-            if (oMove.col == col && oMove.row == row) {
-                isCellAvailable = false;
-                break;
-            }
-        }
-        if (!isCellAvailable)
+    private boolean clickedCell(int row, int col) {
+        if (mark[row][col] != 0)
             return false;
-
-        boolean isClicked = false;
-        RectF rect = new RectF(col * cellSize, row * cellSize, col * cellSize + cellSize, row * cellSize + cellSize);
-        if (rect.contains(clickedX, clickedY)) {
-            Log.d(TAG, "clickedCell: " + col + ", " + row);
-            isClicked = true;
-
+        else {
+            // click to an available cell
             if (currentUser == player1) {
+                mark[row][col] = 1;
                 xMoves.add(new Move(player1, "", col, row));
             } else if (currentUser == player2) {
+                mark[row][col] = 2;
                 oMoves.add(new Move(player2, "", col, row));
             }
 
             invalidate();
-        } else {
-            isClicked = false;
+
+            return true;
         }
-        return isClicked;
     }
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
-            boolean isClicked = clickedCell(event.getX(), event.getY());
+            int col = (int) (event.getX() / cellSize);
+            int row = (int) (event.getY() / cellSize);
+            boolean isClicked = clickedCell(row, col);
             if (isClicked) {
+                Log.d(TAG, "isWon: " + isWon(row, col));
                 if (mListener != null)
-                    mListener.onStepFinished(currentUser);
+                    mListener.onStepFinished(currentUser, row, col);
                 currentUser = currentUser == player1 ? player2 : player1;
             }
         }
@@ -200,7 +300,7 @@ public class GameScene extends View implements View.OnTouchListener {
          *
          * @param playerInfo
          */
-        void onStepFinished(PlayerInfo playerInfo);
+        void onStepFinished(PlayerInfo playerInfo, int row, int column);
 
         /**
          * call when game is finished

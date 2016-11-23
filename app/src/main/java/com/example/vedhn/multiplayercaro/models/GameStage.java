@@ -1,7 +1,5 @@
 package com.example.vedhn.multiplayercaro.models;
 
-import java.util.ArrayList;
-import java.util.List;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -10,17 +8,17 @@ import android.os.Parcelable;
  */
 
 public class GameStage implements Parcelable {
-    private PlayerInfo player1;
-    private PlayerInfo player2;
-    private String stageID;
-    private List<Move> moves;
+    public String p1_id;
+    public String p2_id;
+    public String stageID;
+
+    public GameStage() {
+    }
 
     public GameStage(PlayerInfo player1, PlayerInfo player2, String stageID) {
-        this.player1 = player1;
-        this.player2 = player2;
+        this.p1_id = player1.getuID();
+        this.p2_id = player2.getuID();
         this.stageID = stageID;
-
-        moves = new ArrayList<>();
     }
 
     @Override
@@ -30,20 +28,18 @@ public class GameStage implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeParcelable(this.player1, flags);
-        dest.writeParcelable(this.player2, flags);
+        dest.writeString(this.p1_id);
+        dest.writeString(this.p2_id);
         dest.writeString(this.stageID);
-        dest.writeTypedList(this.moves);
     }
 
     protected GameStage(Parcel in) {
-        this.player1 = in.readParcelable(PlayerInfo.class.getClassLoader());
-        this.player2 = in.readParcelable(PlayerInfo.class.getClassLoader());
+        this.p1_id = in.readString();
+        this.p2_id = in.readString();
         this.stageID = in.readString();
-        this.moves = in.createTypedArrayList(Move.CREATOR);
     }
 
-    public static final Parcelable.Creator<GameStage> CREATOR = new Parcelable.Creator<GameStage>() {
+    public static final Creator<GameStage> CREATOR = new Creator<GameStage>() {
         @Override
         public GameStage createFromParcel(Parcel source) {
             return new GameStage(source);

@@ -138,10 +138,6 @@ public class LoginActivity extends AppCompatActivity {
 
                                                                  finish();
                                                                  break;
-                                                             } else {
-                                                                 mPasswordView.setError(getString(R.string.error_incorrect_password));
-                                                                 mPasswordView.requestFocus();
-                                                                 showProgress(false);
                                                              }
                                                          }
                                                          if (!isLoginSuccess) {
@@ -166,9 +162,15 @@ public class LoginActivity extends AppCompatActivity {
         );
     }
 
-    private void startGame(PlayerInfo value) {
+    private void startGame(PlayerInfo player) {
+        // change status of player to waiting
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference users = database.getReference("users");
+        player.setStatus(PlayerInfo.PLAYER_STATE_WAITING);
+        users.child(player.getuID()).setValue(player);
+
         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-        intent.putExtra(MainActivity.EXTRA_PLAYER, value);
+        intent.putExtra(MainActivity.EXTRA_PLAYER, player);
         startActivity(intent);
     }
 
@@ -180,6 +182,9 @@ public class LoginActivity extends AppCompatActivity {
         String pwd = value.getPwd();
         if (em.equals(email)) {
             if (pwd.equals(password)) {
+                mPasswordView.setError(getString(R.string.error_incorrect_password));
+                mPasswordView.requestFocus();
+                showProgress(false);
                 return true;
             } else {
                 return false;

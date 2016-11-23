@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.example.vedhn.multiplayercaro.GameScene
+<com.example.vedhn.multiplayercaro.views.GameScene
     android:id="@+id/gameScene"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -7,4 +7,4 @@
     android:layout_height="match_parent"
     tools:context="com.example.vedhn.multiplayercaro.MainActivity">
 
-</com.example.vedhn.multiplayercaro.GameScene>
+</com.example.vedhn.multiplayercaro.views.GameScene>
