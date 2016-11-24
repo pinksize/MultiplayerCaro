@@ -78,109 +78,84 @@ public class GameScene extends View implements View.OnTouchListener {
      * @return true if game is finished, false otherwise
      */
     public boolean isWon(int row, int col) {
-        int total = 1;
-        int value = mark[row][col];
-        int i = 1, j = 1;
-        // horizontal
-        while (col - i >= 0 && mark[row][col - i] == value) {
-            total++;
-            i++;
-            if (total == 5)
-                break;
-        }
-        if (total == 5)
-            return true;
-        while (col + j < numberOfColumn && mark[row][col + j] == value) {
-            total++;
-            j++;
-            if (total == 5)
-                break;
-        }
-        if (total == 5)
-            return true;
+        return isVerticalWon(row, col) || isHorizontalWon(row, col) || isDiagonalWon(row, col);
+    }
 
-        i = 1;
-        j = 1;
-        total = 1;
-        // vertical
+    private boolean isVerticalWon(int row, int col) {
+        int value = mark[row][col];
+        int total = 1;
+        int i = 1;
         while (row - i >= 0 && mark[row - i][col] == value) {
             total++;
             i++;
-            if (total == 5)
-                break;
         }
-        if (total == 5)
-            return true;
-        while (row + j < numberOfRow && mark[row + j][col] == value) {
-            total++;
-            j++;
-            if (total == 5)
-                break;
-        }
-        if (total == 5)
-            return true;
 
         i = 1;
-        j = 1;
-        total = 1;
-        // diagonal
-        while (row - i >= 0 && (col - i) >= 0 && mark[row - i][col - i] == value) {
+        while (row + i < numberOfRow && mark[row + i][col] == value) {
             total++;
             i++;
-            if (total == 5)
-                break;
         }
-        if (total == 5)
-            return true;
-        while (row + j < numberOfRow && col + j < numberOfColumn && mark[row + j][col + j] == value) {
+
+        if (total >= 5)
+            Log.d(TAG, "isVerticalWon");
+        return total >= 5;
+    }
+
+    private boolean isHorizontalWon(int row, int col) {
+        int value = mark[row][col];
+        int i = 1;
+        int total = 1;
+        while (col - i >= 0 && mark[row][col - i] == value) {
             total++;
-            j++;
-            if (total == 5)
-                break;
+            i++;
         }
-        if (total == 5)
-            return true;
 
         i = 1;
-        j = 1;
-        total = 1;
-        while (row + i < numberOfRow && col - i >= 0 && mark[row + i][col - i] == value) {
+        while (col + i < numberOfColumn && mark[row][col + i] == value) {
             total++;
-            i--;
-            if (total == 5)
-                break;
+            i++;
         }
-        if (total == 5)
-            return true;
-        while (row - j >= 0 && col + j < numberOfColumn && mark[row - j][col + j] == value) {
-            total++;
-            j++;
-            if (total == 5)
-                break;
-        }
-        return total == 5;
 
+        if (total >= 5)
+            Log.d(TAG, "isHorizontalWon");
+        return total >= 5;
     }
 
-    private boolean isVerticalWon(int row, int col){
+    private boolean isDiagonalWon(int row, int col) {
         int value = mark[row][col];
         int total = 1;
+        int i = 1;
+        while (row - i >= 0 && col - i >= 0 && mark[row - i][col - i] == value) {
+            total++;
+            i++;
+        }
+        i = 1;
+        while (row + i < numberOfRow && col + i < numberOfColumn && mark[row + i][col + i] == value) {
+            total++;
+            i++;
+        }
+        if (total >= 5) {
+            Log.d(TAG, "isDiagonalWon");
+            return true;
+        }
 
-        return total == 5;
-    }
+        i = 1;
+        total = 1;
+        while (row - i >= 0 && col + i < numberOfColumn && mark[row - i][col + i] == value) {
+            total++;
+            i++;
+        }
+        i = 1;
+        while (row + i < numberOfRow && col - i >= 0 && mark[row + i][col - i] == value) {
+            total++;
+            i++;
+        }
 
-    private boolean isHorizontalWon(int row, int col){
-        int value = mark[row][col];
-        int total = 0;
-
-        return total == 5;
-    }
-
-    private boolean isDiagonalWon(int row, int col){
-        int value = mark[row][col];
-        int total = 0;
-
-        return total == 5;
+        if (total >= 5) {
+            Log.d(TAG, "isDiagonalWon");
+            return true;
+        }else
+            return false;
     }
 
     public void startGame() {
@@ -189,7 +164,7 @@ public class GameScene extends View implements View.OnTouchListener {
             mListener.onGameStarted(player1, player2);
     }
 
-    public void endGame() {
+    private void endGame() {
         setOnTouchListener(null);
         if (mListener != null)
             mListener.onGameFinished(currentUser);
@@ -284,9 +259,14 @@ public class GameScene extends View implements View.OnTouchListener {
             int row = (int) (event.getY() / cellSize);
             boolean isClicked = clickedCell(row, col);
             if (isClicked) {
-                Log.d(TAG, "isWon: " + isWon(row, col));
                 if (mListener != null)
                     mListener.onStepFinished(currentUser, row, col);
+
+                if (isWon(row, col)){
+                    Log.d(TAG, "isWon: " + isWon(row, col));
+                    endGame();
+                }
+
                 currentUser = currentUser == player1 ? player2 : player1;
             }
         }
